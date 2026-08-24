@@ -47,8 +47,11 @@ jobs:
     - name: Force Generate & Fix Gradle Wrapper
       run: |
         if [ ! -f "gradlew" ]; then
-          echo "[*] Gradle Wrapper Missing. Generating wrapper v8.7..."
-          gradle wrapper --gradle-version 8.7
+          echo "[*] Gradle Wrapper Missing. Generating wrapper v9.3.1..."
+          gradle wrapper --gradle-version 9.3.1
+        else
+          echo "[*] Updating Gradle Wrapper to v9.3.1..."
+          gradle wrapper --gradle-version 9.3.1
         fi
         chmod +x gradlew
 
