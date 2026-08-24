@@ -1,0 +1,73 @@
+name: Universal APK Build Engine
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
+
+    - name: Auto-Extract Zip & Auto-Detect Project Root
+      run: |
+        echo "=== Checking for ZIP Archives ==="
+        ZIP_FILE=$(find . -maxdepth 2 -name "*.zip" | head -n 1)
+        
+        if [ -n "$ZIP_FILE" ]; then
+          echo "[+] Zip Archive Found: $ZIP_FILE"
+          unzip -q -o "$ZIP_FILE" -d extracted_app
+          
+          # Detect Gradle project root (Kotlin or Groovy DSL)
+          PROJ_ROOT=$(find extracted_app -maxdepth 4 \( -name "settings.gradle" -o -name "settings.gradle.kts" \) -exec dirname {} \; | head -n 1)
+          
+          if [ -n "$PROJ_ROOT" ]; then
+            echo "[+] Found Android Project Root at: $PROJ_ROOT"
+            cp -r $PROJ_ROOT/* . 2>/dev/null || true
+            cp -r $PROJ_ROOT/.[!.]* . 2>/dev/null || true
+          else
+            echo "[!] No settings.gradle found. Moving root contents..."
+            cp -r extracted_app/* . 2>/dev/null || true
+          fi
+          rm -rf extracted_app
+        else
+          echo "[*] No ZIP file found. Proceeding with repository files directly."
+        fi
+
+    - name: Set up Java JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Force Generate & Fix Gradle Wrapper
+      run: |
+        if [ ! -f "gradlew" ]; then
+          echo "[*] Gradle Wrapper Missing. Generating wrapper v8.7..."
+          gradle wrapper --gradle-version 8.7
+        fi
+        chmod +x gradlew
+
+    - name: Inject Custom Debug Keystore
+      run: |
+        mkdir -p ~/.android
+        keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+        cp debug.keystore ~/.android/
+        cp debug.keystore app/ || true
+
+    - name: Build Debug APK
+      run: |
+        ./gradlew assembleDebug --no-daemon --stacktrace
+
+    - name: Upload Output APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: Universal-Compiled-APK
+        path: |
+          **/build/outputs/apk/debug/*-debug.apk
+          **/build/outputs/apk/release/*.apk
+          
