@@ -1,4 +1,4 @@
-name: Universal APK Build Engine
+Name: Universal APK Build Engine
 
 on:
   push:
@@ -47,11 +47,11 @@ jobs:
     - name: Force Generate & Fix Gradle Wrapper
       run: |
         if [ ! -f "gradlew" ]; then
-          echo "[*] Gradle Wrapper Missing. Generating wrapper v9.3.1..."
-          gradle wrapper --gradle-version 9.3.1
+          echo "[*] Gradle Wrapper Missing. Generating fallback wrapper v8.7..."
+          gradle wrapper --gradle-version 8.7
         else
-          echo "[*] Updating Gradle Wrapper to v9.3.1..."
-          gradle wrapper --gradle-version 9.3.1
+          echo "[*] Updating Gradle Wrapper to v8.7..."
+          gradle wrapper --gradle-version 8.7
         fi
         chmod +x gradlew
 
