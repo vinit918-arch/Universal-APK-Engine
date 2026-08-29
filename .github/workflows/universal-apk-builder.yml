@@ -1,4 +1,4 @@
-Name: Universal APK Build Engine
+name: Universal APK Build Engine
 
 on:
   push:
